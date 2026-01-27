@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[1]))
+
 import pathlib
 from src.problem2_top_words import top_k_words
 
