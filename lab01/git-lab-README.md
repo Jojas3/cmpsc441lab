@@ -5,6 +5,7 @@ This lab is designed to introduce you to the basics of Git. You will learn how t
 Git is a distributed version control system that allows you to keep track of your code changes and collaborate with other developers. It is a tool that is used by developers to manage their codebase and work on projects with other developers.
 
 ## Checkout these resource for learning more about Git
+- https://www.youtube.com/watch?v=Ala6PHlYjmw
 - https://www.youtube.com/watch?v=SWYqp7iY_Tc
 - https://githubtraining.github.io/training-manual
 
@@ -24,11 +25,11 @@ Git is a distributed version control system that allows you to keep track of you
 - `git stash`
 
 ## Submission
+- Clone this repository in your local machine.
 - Create your own remote repository in GitHub.
-- Clone this repository using the `git clone` command in your local machine.
-- Rename the remote from 'origin' to 'profremote'.
+- Rename the remote from 'origin' to 'profremote', using the `git remote` command
 - Link your local repository to your remote repository using `git remote add origin <your-remote-repo-link>`
-- Create your first python script to print 'Hello [your name]'.
+- Create your first python script (`lab01.py`) to print 'Hello [your name]'.
 - Commit your changes to the repository
     - Use `git add` to stage your changes
         - You can add just the file you created or add all untracked files, if you created others.

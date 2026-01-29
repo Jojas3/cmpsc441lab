@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[1]))
+
 import pytest
 from src.problem1_unique import uniques_in_order
 

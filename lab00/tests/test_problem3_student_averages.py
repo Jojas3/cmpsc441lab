@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[1]))
+
 import csv
 import pathlib
 from src.problem3_student_averages import compute_student_averages

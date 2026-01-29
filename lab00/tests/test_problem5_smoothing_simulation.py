@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[1]))
+
 from src.problem5_smoothing_simulation import smooth_once, smooth_until_stable
 
 def almost_equal_list(a, b, tol=1e-9):
