@@ -110,8 +110,10 @@ def infinite_counter(start=0):
     Yields:
         int: The next number in the sequence
     """
-    # YOUR CODE HERE
-    pass
+    current = start
+    while True:
+        yield current
+        current += 1
 
 
 # TODO Exercise 2: Create a cycling generator
@@ -139,8 +141,10 @@ def color_cycle(items):
     Yields:
         The next item in the cycle
     """
-    # YOUR CODE HERE
-    pass
+    index = 0
+    while True:
+        yield items[index]
+        index = (index + 1) % len(items)
 
 
 # TODO Exercise 3: Create a take_n function that extracts n values from a generator
@@ -168,8 +172,10 @@ def take_n(generator, n):
     Returns:
         list: A list containing the next n values from the generator
     """
-    # YOUR CODE HERE
-    pass
+    result = []
+    for _ in range(n):
+        result.append(next(generator))
+    return result
 
 
 # ============================================================================
