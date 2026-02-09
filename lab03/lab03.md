@@ -1,109 +1,106 @@
-# Prompt Engineering Process
+# Lab03: LLM Agent Development - Reflection Report
 
-## Step 1: Initial Implementation with Basic System Prompt
-
-### Intention
-Create a functional D&D agent with a basic system prompt that establishes the Dungeon Master role and implements the core chat loop structure based on demo_agent.py.
-
-### Action/Change
-- Implemented the main chat loop: display assistant response, get user input, check for /exit command
-- Added initial system prompt: "You are an experienced and creative Dungeon Master running a D&D adventure. You create immersive and engaging fantasy worlds with vivid descriptions. You are friendly, enthusiastic, and always ready to respond to player actions. Guide the player through an exciting adventure full of mystery, danger, and discovery."
-- Set temperature to 0.7 and top_p to 0.9 for balanced creativity
-- Used model: gemma3:270m
-
-### Result
-The agent successfully initiates conversations and responds to player actions. The system prompt establishes context, but responses can be somewhat generic without detailed world-building or consequences.
-
-### Reflection/Analysis of the Result
-The basic setup works well for getting started, but the generic system prompt doesn't provide specific constraints or narrative hooks that would make the adventure more engaging. The temperature settings are reasonable for creativity, but may need adjustment based on desired response coherence.
+## Overview
+This lab involved creating a D&D Dungeon Master agent using the Ollama LLM framework. The agent was implemented in `lab03_dnd_agent.py` and tested with multiple interactive scenarios.
 
 ---
 
-## Step 2: Enhanced System Prompt with World Context
+## Step 1: Initial Implementation
 
 ### Intention
-Improve engagement by providing a specific fantasy world setting and establishing clearer expectations for the DM's behavior regarding consequences and narrative flow.
+Implement a working D&D Dungeon Master agent that can conduct a conversation with a player, maintaining message history and gracefully handling session exits.
 
 ### Action/Change
-Updated system prompt to include:
-- Specific world setting: "You are running an adventure in a dark, mysterious realm filled with ancient magic"
-- Consequences emphasis: "Remember that every player action has consequences that affect the story"
-- Engagement hooks: "Create interesting NPCs with unique personalities and motivations"
-- Story progression: "Guide the narrative toward meaningful encounters and decisions"
-- Modified temperature to 0.8 for increased creativity while maintaining coherence
+- Created a chat-based system using the `ollama` library with the `gemma3:270m` model
+- Implemented message history management with system prompt, user messages, and assistant responses
+- Set model parameters: temperature=0.7, top_p=0.9
+- Added system prompt to define the DM character: an experienced, creative Dungeon Master
+- Implemented `/exit` command to gracefully terminate the conversation
 
 ### Result
-The agent provides more contextually relevant responses that reference specific world elements and creates named NPCs. Responses feel more immersive with better narrative continuity.
+The agent successfully initialized and maintained conversations through multiple turns. The agent responded coherently to player actions and questions, creating an engaging D&D narrative experience.
 
 ### Reflection/Analysis of the Result
-The enhanced world context significantly improves immersion. By explicitly mentioning consequences and specific world details, the model generates more engaging narratives. The slightly higher temperature allows for more varied responses while the explicit instructions help maintain narrative consistency. This iteration clearly improved the player experience.
+The implementation was successful due to:
+- **Clear system prompt**: The system message effectively guided the model to roleplay as a DM
+- **Message structure**: Properly formatted messages (system, user, assistant) helped maintain conversation context
+- **Seed parameter**: Using a deterministic seed based on the user's name ensured reproducibility
+- **Temperature setting**: A moderate temperature (0.7) balanced creativity with stability
+
+The agent demonstrated good narrative coherence and responded appropriately to player actions. The use of Eldoria as the setting was consistent across sessions.
 
 ---
 
-## Step 3: Constraint-Based Prompt for Focused Gameplay
+## Step 2: Multiple Scenario Testing
 
 ### Intention
-Test whether adding explicit gameplay constraints and rules helps the agent make better decisions about story pacing and player challenges.
+Test the agent's consistency and robustness across multiple different interaction scenarios to verify it can handle varied player inputs and maintain the D&D narrative.
 
 ### Action/Change
-- Added explicit mechanics: "Manage character resources (health, spells, items) and describe their current status"
-- Added pacing guidance: "Present meaningful choices rather than just narrating events"
-- Added challenge management: "Balance difficulty - challenges should be hard but fair, with realistic odds shown to the player"
-- Reduced temperature to 0.6 to prioritize rule consistency over pure creativity
-- Added max_tokens constraint of 200 for more focused responses
+- Created `run_scenarios.py` to automate running the agent three times with different interaction sequences
+- Scenario 1: Combat-focused adventure with monster fighting and spell casting
+- Scenario 2: Stealth-focused adventure with guard sneaking and treasure hunting
+- Scenario 3: Exploration-focused adventure with forest exploration and ruins investigation
+- Each scenario properly calls `/exit` to gracefully close the session and save attempts
 
 ### Result
-The agent becomes more structured in presenting information and tends to explicitly offer choices. Responses are more concise and game-like rather than purely narrative. However, some creative flourishes are lost.
+All three scenarios completed successfully with exit code 0. The agent:
+- Consistently created engaging narratives
+- Responded appropriately to different player approaches (combat, stealth, exploration)
+- Maintained character as the Dungeon Master throughout each session
+- Properly saved all session data to `attempts.txt`
 
 ### Reflection/Analysis of the Result
-The constraints made the gameplay more interactive and clear about available options. The lower temperature improved consistency but made responses somewhat formulaic. The max_tokens limit was effective for pacing but sometimes cut off interesting descriptions. This shows a tradeoff between structure and immersion - both are valuable depending on the player's preference.
+The agent showed strong robustness and consistency:
+- **Adaptability**: The agent adapted well to different player strategies without losing the DM role
+- **Context awareness**: Each response built on the player's previous actions
+- **Consistent tone**: Despite different scenarios, the agent maintained the same enthusiastic, narrative-driven tone
+- **File persistence**: The `attempts.txt` file successfully accumulated session data from all three runs
+- **Seed reproducibility**: The fixed seed ensured consistent initial responses across runs
+
+The agent successfully demonstrated that it can handle multiple complete game sessions while maintaining narrative quality and proper session management.
 
 ---
 
-## Step 4: Emotional Depth and Player Investment
+## Step 3: Code Quality and Structure
 
 ### Intention
-Enhance player engagement by making NPCs and situations more emotionally compelling and creating personal stakes in the story.
+Ensure the implementation follows best practices and the code is well-structured for maintainability.
 
 ### Action/Change
-- Added emotional guidance: "Create emotionally resonant NPCs that the player can form relationships with"
-- Added stakes: "Make the consequences of player choices matter - victories should feel earned and failures should hurt"
-- Added player investment: "Create situations where the player's character decisions reveal their personality and values"
-- Increased temperature back to 0.75 for more nuanced emotional responses
-- Removed max_tokens limit to allow fuller narrative descriptions
+- Code includes proper imports and path setup for accessing utility modules
+- Uses `pretty_stringify_chat()` function to format chat history for logging
+- Implements `ollama_seed()` function to generate deterministic seeds from user names
+- Proper file handling with append mode for `attempts.txt`
+- Clear separation between configuration (model, options) and execution logic
 
 ### Result
-The agent creates more compelling story moments with named NPCs that have apparent motivations and emotional arcs. Players report feeling more invested in the narrative outcomes.
+The code is clean, functional, and properly structured. All required functionality works as intended.
 
 ### Reflection/Analysis of the Result
-This iteration significantly improved narrative engagement by focusing on emotional investment. The removal of hard token limits allowed for richer descriptions while the emotional guidance created more memorable encounters. The moderate temperature provided good balance between creative storytelling and coherent world-building. This proved to be one of the most impactful changes for player experience.
+The implementation benefits from:
+- **Modular design**: Utility functions in `util/llm_utils.py` reduce code duplication
+- **Reproducibility**: Seed-based randomization allows for testing and debugging
+- **Proper logging**: All sessions are appended to a single file for review
+- **Error handling**: The `/exit` command properly terminates the loop and saves data
 
 ---
 
-## Step 5: Meta-Gaming and Adaptability
+## Key Observations
 
-### Intention
-Improve the agent's ability to adapt to individual play styles and learn from player preferences throughout a session.
-
-### Action/Change
-- Added adaptability: "Pay attention to what the player enjoys - more combat, exploration, roleplay, or problem-solving - and adapt the scenario to their preferences"
-- Added tone matching: "Mirror the player's communication style and match their desired tone (serious, comedic, dark, whimsical, etc.)"
-- Added flexibility: "Be willing to deviate from planned narrative if the player takes an interesting direction"
-- Set temperature to 0.8 with seed randomization for reproducibility while maintaining variation
-- Added session tracking reminder: "Remember all previous events and character development from this adventure"
-
-### Result
-The agent becomes more responsive to individual player preferences and adjusts pacing/tone accordingly. Sessions feel more personalized. The agent maintains better continuity of character development and world state.
-
-### Reflection/Analysis of the Result
-This iteration demonstrated that meta-awareness about the gaming experience itself improves player satisfaction. By explicitly instructing the model to observe and adapt to player preferences, the agent becomes less one-size-fits-all and more tailored. The seed consistency with high temperature provides good reproducibility for testing while maintaining freshness. This iteration shows that flexibility and responsiveness are key components of good game facilitation.
+1. **Model Performance**: The `gemma3:270m` model is lightweight but effective for D&D narration
+2. **Temperature Setting**: The 0.7 temperature provides good balance between creativity and coherence
+3. **System Prompt Effectiveness**: A detailed system prompt significantly improves role adherence
+4. **Session Management**: Graceful exit handling and proper file logging enables session persistence
 
 ---
 
-## Key Learnings
+## Conclusion
 
-1. **System prompts matter significantly** - Moving from generic to specific world context improved immersion dramatically
-2. **Temperature tuning requires thoughtful tradeoffs** - Higher temperatures enable creativity but lower temperatures improve consistency
-3. **Explicit instruction of values** - Telling the model what matters (consequences, emotional investment, player agency) directly affects output quality
-4. **Player-centric design** - The best improvements focused on what makes the player experience better rather than what seems technically impressive
-5. **Iterative refinement** - Each iteration built on previous learnings, showing that systematic experimentation is more effective than random changes
+The lab successfully demonstrates the implementation of a working LLM-based agent that can:
+- Maintain conversation context over multiple turns
+- Generate coherent, narrative-driven responses
+- Adapt to different player actions and strategies
+- Gracefully handle session termination and logging
+
+The agent is functional, consistent, and ready for use. The multiple test scenarios confirm its robustness across different interaction patterns.

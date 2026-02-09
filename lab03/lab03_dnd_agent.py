@@ -6,7 +6,8 @@ from ollama import chat
 from util.llm_utils import pretty_stringify_chat, ollama_seed as seed
 
 # Add you code below
-sign_your_name = 'GitHub Copilot'
+sign_your_name = 'Jacob Dzikowski'
+
 model = 'gemma3:270m'
 options = {'temperature': 0.7, 'top_p': 0.9}
 messages = [
@@ -33,7 +34,7 @@ while True:
     break
 
 # Save chat
-with open(Path('lab03/attempts.txt'), 'a') as f:
+with open(Path(__file__).parent / 'attempts.txt', 'a') as f:
   file_string  = ''
   file_string +=       '-------------------------NEW ATTEMPT-------------------------\n\n\n'
   file_string += f'Model: {model}\n'
