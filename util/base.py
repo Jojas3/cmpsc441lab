@@ -1,12 +1,12 @@
 from dndnetwork import DungeonMasterServer, PlayerClient
-from llm_utils import TemplateChat
+from llm_utils import AgentTemplate
 
 
 class DungeonMaster:
     def __init__(self):
         self.game_log = ['START']
         self.server = DungeonMasterServer(self.game_log, self.dm_turn_hook)
-        self.chat = TemplateChat.from_file('util/templates/dm_chat.json', sign='hello')
+        self.chat = AgentTemplate.from_file('util/templates/dm_chat.json', sign='hello')
         self.start = True
 
     def start_server(self):
