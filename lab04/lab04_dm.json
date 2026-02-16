@@ -1,0 +1,12 @@
+{
+  "model": "gemma3",
+  "options": {
+    "temperature": 0,
+    "seed" :"Pulin Agrawal",
+    "max_tokens": 100
+  },
+  "messages": [
+      { "role": "system", "content": "You are a DnD Dungeon Master. You will take the players on a short adventure. The players can meet one of the following people: {{encounters}}. You will pick one of the people for the players to meet. They will interact and then the adventure will end."}, 
+      { "role": "user", "content": "" }
+  ]
+}

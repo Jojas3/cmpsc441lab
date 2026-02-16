@@ -37,7 +37,7 @@ def tool_tracker(func):
     return wrapper
 
 def run_console_chat(**kwargs):
-    chat = TemplateChat.from_file(**kwargs)
+    chat = AgentTemplate.from_file(**kwargs)
     message = chat.start_chat()
     while True:
         print('Agent:', message)
@@ -50,22 +50,23 @@ def run_console_chat(**kwargs):
                 print('Ending match:', ending_match)
             break
 
-class TemplateChat:
-    def __init__(self, template, sign=None, **kwargs):
+class AgentTemplate:
+    def __init__(self, template, **kwargs):
         self.instance = template
-        self.instance['options']['seed'] = hash(str(sign))
+        self.instance['options']['seed'] = hash(str(self.instance['options']['seed']))
         self.messages = self.instance['messages']
-        self.end_regex = kwargs['end_regex'] if 'end_regex' in kwargs else None
+        self.stop = self.instance['options']['stop'] if 'stop' in self.instance['options'] else None
         self.function_caller = kwargs['function_call_processor'] if 'function_call_processor' in kwargs else None
         process_response_method = kwargs['process_response'] if 'process_response' in kwargs else lambda self, x: x 
         self.process_response = MethodType(process_response_method, self)
         self.parameters = kwargs
 
-    def from_file(template_file, sign=None, **kwargs):
+    @classmethod
+    def from_file(cls, template_file, **kwargs):
         with open(Path(template_file), 'r') as f:
             template = json.load(f)
 
-        return TemplateChat(template, sign, **kwargs)
+        return cls(template, **kwargs)
 
     def completion(self, **kwargs):
         self.parameters |= kwargs
@@ -87,20 +88,20 @@ class TemplateChat:
 
             response = self.process_response(response)
 
-            if self.end_regex:
-                if match:=re.search(self.end_regex, response.message.content, re.DOTALL):
-                    return response.message.content, match.group(1).strip()
+            if self.stop and any(stop_token in response.message.content for stop_token in self.stop):
+                return response.message.content
 
-            prompt = yield response.message.content
+            user_input = yield response.message.content
 
-            logging.info(f'User: {prompt}')
-            self.messages.append({'role': 'user', 'content': prompt})
-            if prompt == '/exit':
+            logging.info(f'User: {user_input}')
+            self.messages.append({'role': 'user', 'content': user_input})
+            if user_input == '/exit':
                 break
 
     def start_chat(self):
         self.chat_generator = self._chat_generator_func()
-        return next(self.chat_generator)
+        first_message = next(self.chat_generator)
+        return first_message
 
-    def send(self, message):
-        return self.chat_generator.send(message)
+    def send(self, user_input):
+        return self.chat_generator.send(user_input)

@@ -1,0 +1,12 @@
+{
+  "model": "gemma3",
+  "options": {
+    "temperature": 0,
+    "seed" :"Pulin Agrawal",
+    "max_tokens": 100
+  },
+  "messages": [
+      { "role": "system", "content": "You are a npc that the players will encounter in a DnD adventure. You will be friendly to the player and may offer them quests or information."}, 
+      { "role": "user", "content": "" }
+  ]
+}
