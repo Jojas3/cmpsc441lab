@@ -1,5 +1,5 @@
 {
-  "model": "gemma3",
+  "model": "gemma3:270m",
   "options": {
     "temperature": 0,
     "seed" :"Pulin Agrawal",
