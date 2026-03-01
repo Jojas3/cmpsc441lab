@@ -86,7 +86,25 @@ def generate_character(description: str) -> CharacterSheet:
     Returns:
         A validated CharacterSheet instance
     """
-    pass
+    system_msg = {
+        "role": "system",
+        "content": (
+            "You are a Dungeons & Dragons character generator. "
+            "Given a short description, produce a JSON object that matches the provided schema exactly. "
+            "Do not include any additional text, explanations, or markdown — only the JSON."
+        ),
+    }
+
+    user_msg = {"role": "user", "content": f"Create a character: {description}"}
+
+    response = ollama.chat(
+        model=MODEL,
+        messages=[system_msg, user_msg],
+        format=CharacterSheet.model_json_schema(),
+    )
+
+    # Parse and validate the JSON response into the Pydantic model
+    return CharacterSheet.model_validate_json(response.message.content)
 
 
 def generate_monster(concept: str) -> MonsterStats:
@@ -103,7 +121,24 @@ def generate_monster(concept: str) -> MonsterStats:
     Returns:
         A validated MonsterStats instance
     """
-    pass
+    system_msg = {
+        "role": "system",
+        "content": (
+            "You are a Dungeons & Dragons monster generator. "
+            "Given a short concept, produce a JSON object that matches the provided schema exactly. "
+            "Return only the JSON with no extra commentary."
+        ),
+    }
+
+    user_msg = {"role": "user", "content": f"Create a monster from this concept: {concept}"}
+
+    response = ollama.chat(
+        model=MODEL,
+        messages=[system_msg, user_msg],
+        format=MonsterStats.model_json_schema(),
+    )
+
+    return MonsterStats.model_validate_json(response.message.content)
 
 
 def generate_encounter(party_level: int, num_monsters: int, theme: str) -> Encounter:
@@ -128,7 +163,34 @@ def generate_encounter(party_level: int, num_monsters: int, theme: str) -> Encou
     Returns:
         A validated Encounter instance
     """
-    pass
+    system_msg = {
+        "role": "system",
+        "content": (
+            "You are a Dungeons & Dragons encounter designer. "
+            "Produce a single JSON object that exactly matches the provided Encounter schema. "
+            "The `difficulty` field must be one of: Easy, Medium, Hard, or Deadly. "
+            "Include exactly the requested number of monsters in the `monsters` list. "
+            "Do not include any text outside of the JSON response."
+        ),
+    }
+
+    user_msg = {
+        "role": "user",
+        "content": (
+            f"Design an encounter for a party of level {party_level} with {num_monsters} "
+            f"monster(s). Theme: {theme}. Make the monsters appropriate for the party level. "
+            "Provide a short title, setting, narrative_hook, difficulty (Exact: Easy/Medium/Hard/Deadly), "
+            "a list of treasure strings (if any), and a list of monsters matching the MonsterStats schema."
+        ),
+    }
+
+    response = ollama.chat(
+        model=MODEL,
+        messages=[system_msg, user_msg],
+        format=Encounter.model_json_schema(),
+    )
+
+    return Encounter.model_validate_json(response.message.content)
 
 
 # ============================================================================
