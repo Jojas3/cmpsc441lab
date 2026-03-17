@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 
-class OllamaEmbeddingFunction:
+class OllamaEmbeddingFunction(chromadb.EmbeddingFunction):
     """
     Custom embedding function that uses Ollama for embeddings.
     
