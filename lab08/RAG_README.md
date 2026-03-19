@@ -74,6 +74,7 @@ lab08/
    - `__call__()` in `OllamaEmbeddingFunction`
       - This function should use the Ollama embeddings API to generate embeddings for a list of texts
       - Refer to the [Ollama API](https://github.com/ollama/ollama-python) for more information
+      
    - `retrieve_context()`
       - This function should use the ChromaDB collection to retrieve the top 3 most relevant context chunks for a given query
       - Refer to the [ChromaDB Retrieval API](https://docs.trychroma.com/docs/querying-collections/query-and-get) for more information
