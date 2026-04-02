@@ -49,8 +49,9 @@ def roll_dice(n_dice: int, sides: int, modifier: int = 0) -> str:
     - Sum the rolls and add the modifier
     - Return a message like "Rolled 3d6+2: [4, 2, 5] + 2 = 13"
     """
-    # TODO: Implement dice rolling
-    pass
+    rolls = [random.randint(1, sides) for _ in range(n_dice)]
+    total = sum(rolls) + modifier
+    return f"Rolled {n_dice}d{sides}+{modifier}: {rolls} + {modifier} = {total}"
 
 
 @mcp.tool()
@@ -64,8 +65,14 @@ def get_character_stat(character: str, stat: str) -> str:
     - Return the stat value, e.g. "Fighter's strength is 16"
     - Handle invalid character/stat names gracefully
     """
-    # TODO: Implement character stat lookup
-    pass
+    character_lower = character.lower()
+    stat_lower = stat.lower()
+    if character_lower not in CHARACTERS:
+        return f"Character '{character}' not found."
+    if stat_lower not in CHARACTERS[character_lower]:
+        return f"Stat '{stat}' not found for character '{character}'."
+    value = CHARACTERS[character_lower][stat_lower]
+    return f"{character.capitalize()}'s {stat.lower()} is {value}."
 
 
 @mcp.tool()
@@ -78,8 +85,10 @@ def calculate_damage(base_damage: int, armor_class: int, attack_roll: int) -> st
     - Otherwise, the attack misses (0 damage)
     - Return a descriptive message
     """
-    # TODO: Implement damage calculation
-    pass
+    if attack_roll >= armor_class:
+        return f"Attack hits! Dealt {base_damage} damage."
+    else:
+        return f"Attack misses! Dealt 0 damage."
 
 
 if __name__ == "__main__":

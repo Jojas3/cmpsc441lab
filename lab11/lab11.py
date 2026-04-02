@@ -54,10 +54,8 @@ async def chat_with_tools(user_message: str, agent) -> str:
     The result is also a dict with a "messages" key. The last message is the
     agent's final response - return its .content attribute.
     """
-    # TODO: Invoke the LangGraph agent and return the final response
-    # result = await agent.ainvoke({"messages": [("human", user_message)]})
-    # return result["messages"][-1].content
-    return "Not implemented yet"
+    result = await agent.ainvoke({"messages": [("human", user_message)]})
+    return result["messages"][-1].content
 
 
 async def main():
@@ -87,7 +85,7 @@ async def main():
             # TODO: Load MCP tools as LangChain-compatible tools
             # Use load_mcp_tools(session) - it returns a list of BaseTool objects
             # that LangGraph can use directly (no manual format conversion needed!)
-            tools = []  # Replace with: tools = await load_mcp_tools(session)
+            tools = await load_mcp_tools(session)
 
             print(f"\nFound {len(tools)} tools:")
             for tool in tools:
@@ -103,8 +101,7 @@ async def main():
             # TODO: Create a LangGraph ReAct agent
             # Pass the llm, tools, and SYSTEM_PROMPT (as state_modifier) to create_react_agent.
             # The agent will automatically handle the tool-calling loop - no manual loop needed!
-            # agent = create_agent(llm, tools, system_prompt=SYSTEM_PROMPT)
-            agent = None  # Replace this line with the agent creation above
+            agent = create_agent(llm, tools, system_prompt=SYSTEM_PROMPT)
 
             # Interactive chat loop
             print("\n" + "-" * 60)
