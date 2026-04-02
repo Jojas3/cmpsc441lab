@@ -65,17 +65,10 @@ By completing this lab, you will:
 
 ## Setup
 
-Install the required dependencies:
+Install the required dependencies (delete the uv.lock file if the environment setup is stale):
 
-```bash
-cd lab11
-pip install -r requirements.txt
 ```
-
-Or with uv:
-
-```bash
-uv pip install -r requirements.txt
+uv sync
 ```
 
 Ensure Ollama is running:
