@@ -1,22 +1,11 @@
 """
 DnD MCP Server - Lab 11
-========================
-YOUR TASK: Implement an MCP server with three DnD-related tools.
-
-This server will expose tools that can be used by an LLM to interact
-with a DnD game. Use the demo/simple_mcp_server.py as a reference.
-
-Tools to implement:
-1. roll_dice(n_dice, sides, modifier) - Roll dice and return the result
-2. get_character_stat(character, stat) - Get a character's stat value
-3. calculate_damage(base_damage, armor_class, attack_roll) - Calculate damage dealt
+===================================
+Complete implementation of the MCP server with three DnD-related tools.
 """
 
-import asyncio
 import random
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from fastmcp import FastMCP
 
 
 # Sample character data - use this for get_character_stat
@@ -47,12 +36,10 @@ CHARACTERS = {
     }
 }
 
-# =====================================================================
-# TODO: Implement the three tool functions below.
-# Each function should return a string with the result message.
-# =====================================================================
+# Create the MCP server instance
+mcp = FastMCP("dnd-tools-server")
 
-
+@mcp.tool()
 def roll_dice(n_dice: int, sides: int, modifier: int = 0) -> str:
     """
     Roll n_dice dice with the given number of sides, plus a modifier.
@@ -66,6 +53,7 @@ def roll_dice(n_dice: int, sides: int, modifier: int = 0) -> str:
     pass
 
 
+@mcp.tool()
 def get_character_stat(character: str, stat: str) -> str:
     """
     Look up a character's stat from the CHARACTERS dict.
@@ -80,6 +68,7 @@ def get_character_stat(character: str, stat: str) -> str:
     pass
 
 
+@mcp.tool()
 def calculate_damage(base_damage: int, armor_class: int, attack_roll: int) -> str:
     """
     Calculate damage dealt based on attack roll vs armor class.
@@ -93,87 +82,5 @@ def calculate_damage(base_damage: int, armor_class: int, attack_roll: int) -> st
     pass
 
 
-# =====================================================================
-# MCP Server wiring — tool schemas and call_tool dispatcher
-# You should NOT need to modify anything below this line.
-# =====================================================================
-
-# Create the MCP server instance
-server = Server("dnd-tools-server")
-
-# Map tool names to their implementation functions
-TOOL_FUNCTIONS = {
-    "roll_dice": roll_dice,
-    "get_character_stat": get_character_stat,
-    "calculate_damage": calculate_damage,
-}
-
-
-@server.list_tools()
-async def list_tools() -> list[Tool]:
-    """
-    List all available DnD tools.
-
-    TODO: Define three tools with their input schemas:
-
-    1. roll_dice:
-       - n_dice (int): Number of dice to roll
-       - sides (int): Number of sides on each die
-       - modifier (int, optional): Modifier to add to the roll (default 0)
-
-    2. get_character_stat:
-       - character (str): Character name (fighter, wizard, or rogue)
-       - stat (str): Stat name (strength, dexterity, constitution, intelligence, wisdom, charisma)
-
-    3. calculate_damage:
-       - base_damage (int): Base damage amount
-       - armor_class (int): Target's armor class
-       - attack_roll (int): The attack roll result
-
-    See demo/simple_mcp_server.py for the Tool schema format.
-    """
-    return [
-        # TODO: Define your tools here
-        # Example:
-        # Tool(
-        #     name="roll_dice",
-        #     description="Roll dice for DnD",
-        #     inputSchema={
-        #         "type": "object",
-        #         "properties": {
-        #             "n_dice": {"type": "integer", "description": "Number of dice"},
-        #             ...
-        #         },
-        #         "required": ["n_dice", "sides"]
-        #     }
-        # ),
-    ]
-
-
-@server.call_tool()
-async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    """Dispatch tool calls to the corresponding function."""
-    func = TOOL_FUNCTIONS.get(name)
-    if func is None:
-        return [TextContent(type="text", text=f"Unknown tool: {name}")]
-    result = func(**arguments)
-    return [TextContent(type="text", text=result)]
-
-
-async def main():
-    """Run the DnD MCP server."""
-    import sys
-    # Use stderr for logging since stdout is used for JSON-RPC protocol
-    print("Starting DnD MCP server...", file=sys.stderr, flush=True)
-    print("Tools: roll_dice, get_character_stat, calculate_damage", file=sys.stderr, flush=True)
-
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            server.create_initialization_options()
-        )
-
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    mcp.run(transport="stdio")
