@@ -6,9 +6,15 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "chromadb>=1.5.5",
+    "fastapi>=0.100.0",
+    "langchain>=1.2.12",
     "langchain-text-splitters>=1.1.1",
-    "ollama>=0.6.1",
+    "langchain-ollama>=0.2.0",
+    "langchain-mcp-adapters>=0.0.1",
+    "mcp>=1.0.0",
+    "ollama>=0.1.0",
     "pandas>=3.0.1",
-    "pydantic>=2.12.5",
     "pytest>=9.0.2",
+    "uvicorn>=0.23.0",
+    "fastmcp>=3.2.0",
 ]

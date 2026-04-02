@@ -1,0 +1,14 @@
+# Lab 11: MCP (Model Context Protocol) + LangGraph
+# Install with: pip install -r requirements.txt
+
+# MCP Python SDK - Official Model Context Protocol implementation
+mcp>=1.0.0
+
+# LangGraph - ReAct agent framework (handles tool-calling loop automatically)
+langgraph>=0.2.0
+
+# LangChain MCP adapter - converts MCP tools to LangChain-compatible BaseTool objects
+langchain-mcp-adapters>=0.0.1
+
+# LangChain Ollama integration - ChatOllama LLM wrapper
+langchain-ollama>=0.2.0
