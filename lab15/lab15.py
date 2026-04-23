@@ -11,6 +11,7 @@ whether the greedy policy reliably reaches the goal.
 """
 
 from collections import defaultdict
+import random
 
 import gymnasium as gym
 from tqdm import tqdm
@@ -36,16 +37,27 @@ returns_count = defaultdict(int)
 def choose_action(state, action_space, epsilon):
     """Select an action using an epsilon-greedy policy over Q.
 
-    TODO (student):
-        With probability `epsilon`, return a random action sampled from
-        `action_space` (exploration) as shown in return.
-        Otherwise return argmax_a Q[(state, a)] (exploitation). Break
-        ties randomly so the agent does not get stuck when Q is all
-        zeros. When `epsilon == 0.0` this function must act greedily;
-        measurement mode relies on that.
+    With probability `epsilon`, return a random action sampled from
+    `action_space` (exploration). Otherwise return argmax_a Q[(state, a)]
+    (exploitation), breaking ties randomly.
     """
-    # TODO: replace this line with your epsilon-greedy implementation.
-    return action_space.sample()
+    if random.random() < epsilon:
+        return action_space.sample()
+
+    #evaluate all actions and choose a random argmax to break ties
+    best_value = None
+    best_actions = []
+
+    for action in range(action_space.n):
+        value = Q[(state, action)]
+        if best_value is None or value > best_value:
+            best_value = value
+            best_actions = [action]
+
+        elif value == best_value:
+            best_actions.append(action)
+    
+    return random.choice(best_actions)
 
 
 def update_from_episode(episode):
@@ -61,7 +73,13 @@ def update_from_episode(episode):
                returns_count[(s, a)] += 1
                Q[(s, a)] += (G - Q[(s, a)]) / returns_count[(s, a)]
     """
-    # TODO: implement the first-visit MC update.
+    #G is the return of the current episode
+    G = 0.0
+    for state, action, reward in reversed(episode):
+        G = reward + GAMMA * G
+        returns_count[(state, action)] += 1
+        Q[(state, action)] += (G - Q[(state, action)]) / returns_count[(state, action)]
+
     pass
 
 
