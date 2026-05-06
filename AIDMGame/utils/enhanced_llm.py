@@ -70,7 +70,14 @@ class ToolCallingAgent:
             # Check if there are tool calls
             if not assistant_message.get('tool_calls'):
                 # No more tool calls, return the response
-                return assistant_message.get('content', '')
+                content = assistant_message.get('content', '')
+                
+                # Check if content contains malformed tool call JSON
+                if content.strip().startswith('{') and '"name"' in content and '"parameters"' in content:
+                    logging.warning(f"[LLM] Model returned tool call as text instead of using tool calling API: {content[:100]}")
+                    return "I understand your request. Let me help you with that directly."
+                
+                return content
             
             # Process tool calls
             for tool_call in assistant_message['tool_calls']:

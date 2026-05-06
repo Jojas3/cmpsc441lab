@@ -108,11 +108,16 @@ class DungeonMaster:
         if self.use_enhanced:
             # Use enhanced agent with tool calling
             if self.start:
-                prompt = "Welcome the players to an epic D&D adventure! Set the scene dramatically. Consider using narrate_text for the introduction."
+                prompt = "Welcome the players to an epic D&D adventure! Set the scene dramatically and ask what they'd like to do."
                 self.start = False
             else:
                 # Build context-rich prompt
                 recent_log = '\n'.join(self.game_log[-10:])  # Last 10 entries
+                
+                # Check if last action is character management
+                last_action = self.game_log[-1] if self.game_log else ""
+                is_char_management = any(keyword in last_action.lower() for keyword in 
+                    ['inventory', 'add', 'remove', 'class', 'change', 'stat', 'level', 'equipment'])
                 
                 prompt = f"Game Log:\n{recent_log}\n\n"
                 
@@ -120,10 +125,12 @@ class DungeonMaster:
                     prompt += f"Relevant D&D Knowledge:\n{rag_context}\n\n"
                 
                 # Add strategic guidance
-                if self.combat_mode:
+                if is_char_management:
+                    prompt += "The player is requesting a character change. Narrate the change happening in-world, confirm what changed, and continue the adventure.\n\n"
+                elif self.combat_mode:
                     prompt += "You are in combat mode. Use tactical AI to control enemies intelligently. Use roll_attack and roll_dice tools.\n\n"
                 
-                prompt += "Respond as the Dungeon Master. Use tools when appropriate (dice rolls, lookups, narration, images)."
+                prompt += "Respond as the Dungeon Master. Use tools when appropriate (dice rolls, lookups). For character changes, narrate them directly without tools."
             
             # Get response with tool calling
             result = self.agent.process_action(prompt)
