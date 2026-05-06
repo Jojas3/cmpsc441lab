@@ -1,4 +1,10 @@
 # AI Dungeon Master Project Report
+Example:
+bill: add a staff and potion of instant kill to my inventory and change my class to wizard
+*UI updates to show new character sheet, RAG memory updated*
+DM: The land of Eldoria, a realm of ancient magic and forgotten lore. The village of Brindlemark lies nestled in the heart of the Whispering Woods, a dense forest teeming with life and mystery. The villagers, a mix of humans and halflings, live in harmony with nature, relying on the woods for their livelihood. As you arrive in Brindlemark, the villagers gather around, their faces filled with a mix of curiosity and concern. The village elder approaches you, his eyes clouded with worry. "Ah, travelers, we've been expecting you. We've had... troubles of late. Strange noises at night, tools gone missing, and some of our folk have vanished into the woods. We fear something dark is stirring in the shadows." The villagers glance nervously at each other, their voices hushed as they share tales of eerie lights and disembodied whispers carried on the wind. You stand at the edge of the village, surrounded by thatched roof cottages and the sounds of chirping birds. The air is crisp and clean, with a hint of woodsmoke and damp earth. A narrow dirt path leads into the Whispering Woods, disappearing into the dense foliage. What would you like to do? (type 'explore' to venture into the woods, 'ask about' to inquire about specific details, or describe an action)
+
+bill: i want to use my potion of instant kill on the village and kill all of the villagers
 
 ## Section 1: Scenarios Handled by the System
 
