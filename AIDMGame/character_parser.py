@@ -13,7 +13,7 @@ def parse_character_updates(action: str, character):
     
     print(f"[PARSER] Parsing action: {action}")
     
-    # Class changes
+    # Class changes - more flexible detection
     class_keywords = {
         'wizard': 'Wizard',
         'mage': 'Wizard',
@@ -33,9 +33,20 @@ def parse_character_updates(action: str, character):
         'warlock': 'Warlock'
     }
     
-    if 'change' in action_lower and 'class' in action_lower:
-        for keyword, class_name in class_keywords.items():
-            if keyword in action_lower:
+    # Check for class change with multiple patterns
+    class_change_patterns = [
+        r'change\s+(?:my\s+)?class\s+to\s+(\w+)',
+        r'become\s+(?:a\s+)?(\w+)',
+        r'switch\s+to\s+(\w+)',
+        r'(?:i\s+am\s+now\s+a\s+|i\s+am\s+a\s+)(\w+)',
+    ]
+    
+    for pattern in class_change_patterns:
+        match = re.search(pattern, action_lower)
+        if match:
+            class_word = match.group(1).lower()
+            if class_word in class_keywords:
+                class_name = class_keywords[class_word]
                 character.character_class = class_name
                 modified = True
                 # Adjust stats based on class
@@ -99,7 +110,7 @@ def parse_character_updates(action: str, character):
                     character.constitution = 14
                     character.intelligence = 12
                     character.dexterity = 10
-                break
+                break  # Only match first class change pattern
     
     if modified:
         print(f"[PARSER] Character updated: Class={character.character_class}, STR={character.strength}, DEX={character.dexterity}, CON={character.constitution}, INT={character.intelligence}, WIS={character.wisdom}, CHA={character.charisma}")
@@ -111,10 +122,10 @@ def parse_character_updates(action: str, character):
         character.health = character.max_health
         modified = True
     
-    # Add items to inventory
+    # Add items to inventory - improved patterns
     item_patterns = [
+        r'add\s+(?:a\s+|an\s+|the\s+)?(.+?)\s+to\s+(?:my\s+)?inventory',
         r'(?:pick up|take|grab|get|loot|find)\s+(?:a\s+|an\s+|the\s+)?(.+)',
-        r'add\s+(.+?)\s+to\s+inventory',
     ]
     
     for pattern in item_patterns:

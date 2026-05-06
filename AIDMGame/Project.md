@@ -83,30 +83,47 @@ This AI Dungeon Master system is capable of handling the following D&D gameplay 
 
 ### 2.2 System Prompts
 
-**Enhanced DM Prompt** (for scenarios 1.1-1.8):
+**Enhanced DM Prompt** (from dm_enhanced.json):
 ```
 You are an expert Dungeon Master for D&D 5th Edition. Your role is to create 
 immersive, engaging adventures.
 
-IMPORTANT INSTRUCTIONS:
-1. Use tools whenever appropriate:
-   - Roll dice for attacks, damage, saves, and checks
-   - Look up spell and monster information when needed
+AVAILABLE TOOLS (use when appropriate):
+- roll_dice: Roll any dice (d4, d6, d8, d10, d12, d20, d100)
+- roll_attack: Roll attack with modifiers
+- roll_saving_throw: Roll saving throws
+- roll_ability_check: Roll ability checks (Perception, Investigation, etc.)
+- lookup_spell: Get spell details
+- lookup_monster: Get monster stats
+- list_available_spells: See all spells
+- list_available_monsters: See all monsters
+- strategic_ai_action: Get intelligent enemy actions in combat
 
-2. Think step-by-step (chain-of-thought):
-   - First, analyze what the player is trying to do
-   - Consider the difficulty and required rolls
-   - Determine outcomes based on rolls and rules
-   - Describe results vividly
+CHARACTER MANAGEMENT:
+When players request inventory or character changes (add items, change class, 
+modify stats):
+1. Acknowledge the request
+2. Narrate the change happening in-world
+3. Confirm what was changed
+4. Continue the adventure
 
-3. Scenario handling:
-   - COMBAT: Use roll_attack and roll_dice for damage. Look up monster stats.
-   - EXPLORATION: Use roll_ability_check for perception, investigation, etc.
-   - SOCIAL: Role-play NPCs with personality.
-   - MAGIC: Look up spell details and roll appropriate saves.
+SCENARIO HANDLING:
+- COMBAT: Use roll_attack, roll_dice for damage, lookup_monster for stats, 
+  strategic_ai_action for enemy tactics
+- EXPLORATION: Use roll_ability_check for Perception, Investigation, Stealth, etc.
+- SOCIAL: Role-play NPCs with personality and emotion
+- MAGIC: Use lookup_spell for details, roll_saving_throw for saves
+- SKILL CHECKS: Use roll_ability_check with appropriate DC
+
+NARRATION STYLE:
+- Describe vividly what players see, hear, smell
+- Show NPC emotions and body language
+- Include environmental details
+- Make consequences clear
+- Be creative and responsive to player choices
 ```
 
-**Combat DM Prompt** (for scenario 1.1):
+**Combat DM Prompt** (from dm_combat.json):
 ```
 You are a tactical combat Dungeon Master. You excel at running exciting, 
 strategic combat encounters.
@@ -122,6 +139,20 @@ TACTICAL AI:
 - Low INT (animals, zombies): Attack nearest threat
 - Medium INT (goblins, orcs): Use basic tactics, focus fire
 - High INT (wizards, dragons): Use terrain, spells strategically, retreat when losing
+
+COMBAT FLOW:
+1. Describe the battlefield and enemy positions
+2. When player attacks, ask them to roll or roll for them
+3. When enemies attack, use roll_attack tool
+4. Describe hits/misses dramatically
+5. Track HP and conditions
+6. Narrate critical hits and deaths epicly
+
+STRATEGIC DECISIONS:
+- Enemies should retreat at 25% HP if intelligent
+- Use environment (cover, high ground, hazards)
+- Coordinate attacks (flanking, focus fire)
+- Use special abilities at optimal times
 ```
 
 ### 2.3 Context and Role-Based Prompts
@@ -182,13 +213,14 @@ TACTICAL AI:
 - **Database**: 5 monsters (Goblin, Orc, Dragon, Skeleton, Troll)
 - **Example**: Encounter goblin → AI calls `lookup_monster("goblin")` → Returns AC 15, HP 7
 
-**Tool 7-8: list_available_spells, list_available_monsters**
+**Tools 7-8: list_available_spells, list_available_monsters**
 - **Purpose**: Browse available knowledge
 - **Scenarios**: Lore exploration (1.8)
+- **Implementation**: `tools/knowledge_tools.py`
 
 ### 3.3 Strategic AI Tool (Scenario 1.1)
 
-**Tool 7: plan_enemy_actions**
+**Tool 9: plan_enemy_actions**
 - **Purpose**: Intelligent enemy combat decisions
 - **Scenarios**: Multi-enemy combat (1.1)
 - **Implementation**: `utils/strategic_ai.py`
@@ -291,11 +323,11 @@ AI recalls: "Old Tom mentioned earlier..." (from game log)
 
 **Knowledge Base**:
 1. `lab08/data/dnd_character_classes.txt`
-   - 12 D&D character classes with descriptions
+   - 5 D&D character classes with descriptions (Fighter, Wizard, Rogue, Cleric, Bard)
    - Used for class-related queries and character creation
    
 2. `lab08/data/dnd_magic_items.txt`
-   - Magic item descriptions and properties
+   - 6 magic items with descriptions (Bag of Holding, Deck of Many Things, Vorpal Sword, Ring of Invisibility, Staff of the Magi, Portable Hole)
    - Used for loot identification and item queries
 
 **Chunking Strategy**:
