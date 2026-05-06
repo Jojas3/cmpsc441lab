@@ -106,12 +106,6 @@ Default sessions:
 
 Open browser to: **http://127.0.0.1:8000/ui**
 
-**Tutorial included in UI** - Shows how to:
-- Join sessions
-- Take actions (explore, attack, cast spells)
-- Manage character (change class, add items)
-- Use skills and magic
-
 ### Command Line
 
 ```bash
