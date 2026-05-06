@@ -16,10 +16,11 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Set
 import uuid
 
-# Add the parent directory to sys.path to import util
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+# Add the parent directory to sys.path to import utils
+sys.path.insert(0, os.path.dirname(__file__))
 
-from util.base import DungeonMaster
+from utils.base import DungeonMaster
+from character_parser import parse_character_updates
 
 
 # Global state for broadcasting player updates to listening clients
@@ -91,6 +92,8 @@ class GameSession:
         self.in_combat: bool = False
         self.combat_state: Dict = {'players': {}, 'enemies': {'goblin': {'health': 50}}}
         self.dm = DungeonMaster()
+        self.dm_processing = False  # Lock to prevent concurrent DM calls
+        self.dm_lock = threading.Lock()  # Thread lock for DM processing
 
     def add_player(self, player: Player) -> None:
         if self.is_full():
@@ -123,29 +126,43 @@ class GameSession:
 
 class CharacterDB:
     def __init__(self, db_path="ai_dm.db"):
-        self.conn = sqlite3.connect(db_path)
-        self.create_table()
-
-    def create_table(self):
-        self.conn.execute('''
+        self.db_path = db_path
+        self.lock = threading.Lock()
+        # Create table in main thread
+        conn = sqlite3.connect(self.db_path, check_same_thread=False)
+        conn.execute('''
             CREATE TABLE IF NOT EXISTS characters (
                 player_id TEXT PRIMARY KEY,
                 data TEXT
             )
         ''')
-        self.conn.commit()
+        conn.commit()
+        conn.close()
+
+    def _get_connection(self):
+        return sqlite3.connect(self.db_path, check_same_thread=False)
 
     def save_character(self, player_id, character):
-        data = json.dumps(character.to_dict())
-        self.conn.execute('INSERT OR REPLACE INTO characters (player_id, data) VALUES (?, ?)', (player_id, data))
-        self.conn.commit()
+        with self.lock:
+            conn = self._get_connection()
+            try:
+                data = json.dumps(character.to_dict())
+                conn.execute('INSERT OR REPLACE INTO characters (player_id, data) VALUES (?, ?)', (player_id, data))
+                conn.commit()
+            finally:
+                conn.close()
 
     def load_character(self, player_id):
-        cursor = self.conn.execute('SELECT data FROM characters WHERE player_id = ?', (player_id,))
-        row = cursor.fetchone()
-        if row:
-            return PlayerCharacter.from_dict(json.loads(row[0]))
-        return None
+        with self.lock:
+            conn = self._get_connection()
+            try:
+                cursor = conn.execute('SELECT data FROM characters WHERE player_id = ?', (player_id,))
+                row = cursor.fetchone()
+                if row:
+                    return PlayerCharacter.from_dict(json.loads(row[0]))
+                return None
+            finally:
+                conn.close()
 
 
 class SessionManager:
@@ -288,6 +305,7 @@ class SessionAPIHandler(http.server.BaseHTTPRequestHandler):
         let sessionId = '';
         let playerId = '';
         let lastLogLength = 0;
+        let waitingForDM = false;  // Track if we're waiting for DM response
 
         async function loadSessions() {
             try {
@@ -350,10 +368,14 @@ class SessionAPIHandler(http.server.BaseHTTPRequestHandler):
             const action = document.getElementById('action').value;
             if (!action) return;
             
+            // Set waiting state
+            waitingForDM = true;
+            
             // Disable input and button, show loading
             document.getElementById('action').disabled = true;
             document.querySelector('button[onclick="submitAction()"]').disabled = true;
             document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').textContent = 'Sending action...';
             
             try {
                 const response = await fetch(`/sessions/${sessionId}/action`, {
@@ -364,14 +386,24 @@ class SessionAPIHandler(http.server.BaseHTTPRequestHandler):
                 const data = await response.json();
                 if (response.ok) {
                     document.getElementById('action').value = '';
-                    pollLog();  // Update immediately
+                    if (data.status === 'waiting') {
+                        // Another player is being processed
+                        document.getElementById('loading').textContent = 'DM is responding to another player...';
+                    } else {
+                        // Action accepted, waiting for DM
+                        document.getElementById('loading').textContent = 'DM is thinking...';
+                    }
+                    // UI will re-enable automatically when DM response arrives via polling
                 } else {
                     alert('Action failed: ' + data.error);
+                    waitingForDM = false;
+                    document.getElementById('action').disabled = false;
+                    document.querySelector('button[onclick="submitAction()"]').disabled = false;
+                    document.getElementById('loading').style.display = 'none';
                 }
             } catch (error) {
                 alert('Error: ' + error);
-            } finally {
-                // Re-enable input and button, hide loading
+                waitingForDM = false;
                 document.getElementById('action').disabled = false;
                 document.querySelector('button[onclick="submitAction()"]').disabled = false;
                 document.getElementById('loading').style.display = 'none';
@@ -384,20 +416,34 @@ class SessionAPIHandler(http.server.BaseHTTPRequestHandler):
                 const data = await response.json();
                 if (response.ok) {
                     const chat = document.getElementById('chat');
-                    const newMessages = data.game_log.slice(lastLogLength);
-                    newMessages.forEach(msg => {
-                        const p = document.createElement('p');
-                        p.textContent = msg;
-                        chat.appendChild(p);
-                    });
-                    lastLogLength = data.game_log.length;
-                    chat.scrollTop = chat.scrollHeight;
+                    const currentLength = data.game_log.length;
+                    
+                    // Check if new messages arrived
+                    if (currentLength > lastLogLength) {
+                        const newMessages = data.game_log.slice(lastLogLength);
+                        newMessages.forEach(msg => {
+                            const p = document.createElement('p');
+                            p.textContent = msg;
+                            chat.appendChild(p);
+                        });
+                        lastLogLength = currentLength;
+                        chat.scrollTop = chat.scrollHeight;
+                        
+                        // If we were waiting for DM and got a DM response, re-enable input
+                        if (waitingForDM && newMessages.some(msg => msg.startsWith('DM:'))) {
+                            waitingForDM = false;
+                            document.getElementById('action').disabled = false;
+                            document.querySelector('button[onclick="submitAction()"]').disabled = false;
+                            document.getElementById('loading').style.display = 'none';
+                        }
+                    }
+                    
                     updateCharacterSheet(data);
                 }
             } catch (error) {
                 console.error('Poll error:', error);
             }
-            setTimeout(pollLog, 2000);  // Poll every 2 seconds
+            setTimeout(pollLog, 500);  // Poll every 0.5 seconds for very responsive UI
         }
 
         function updateCharacterSheet(data) {
@@ -558,44 +604,74 @@ class SessionAPIHandler(http.server.BaseHTTPRequestHandler):
             if not player:
                 self._send_json(400, {"error": "Player not in session"})
                 return
-            # Process action
-            session.game_log.append(f"{player.name}: {action}")
-            dm_response = ""
-            update_type = "narrative_update"
-            if action.lower().startswith("attack"):
-                # Combat action
-                target = action.split()[1] if len(action.split()) > 1 else "goblin"
-                if target in session.combat_state['enemies']:
-                    damage = random.randint(5, 15)
-                    session.combat_state['enemies'][target]['health'] -= damage
-                    dm_response = f"You attack the {target} for {damage} damage."
-                    if session.combat_state['enemies'][target]['health'] <= 0:
-                        dm_response += f" The {target} is defeated!"
-                        session.in_combat = False
-                    update_type = "combat_update"
-                else:
-                    dm_response = f"No enemy named {target} found."
-                    update_type = "combat_update"
-            else:
-                # Narrative action
-                session.dm.game_log = session.game_log
-                dm_response = session.dm.dm_turn_hook()
-            session.game_log.append(f"DM: {dm_response}")
-            # Update character health and save
-            for p in session.players:
-                if p.player_id == player_id:
-                    p.character.health = session.combat_state['players'][p.name]['health']
-                    self.db.save_character(p.player_id, p.character)
-                    break
-            # Broadcast update
-            update_msg = {
-                "type": update_type,
-                "action": action,
-                "player_name": player.name,
-                "dm_response": dm_response,
-                "combat_state": session.combat_state if update_type == "combat_update" else None
-            }
-            broadcast_to_session(session_id, update_msg)
+            
+            # Check if DM is already processing
+            if session.dm_processing:
+                self._send_json(200, {"status": "waiting", "message": "DM is processing another action, please wait"})
+                return
+            
+            # Acquire lock for DM processing
+            with session.dm_lock:
+                session.dm_processing = True
+                
+                # Broadcast that DM is thinking to ALL players
+                thinking_msg = {
+                    "type": "dm_thinking",
+                    "player_name": player.name,
+                    "action": action
+                }
+                broadcast_to_session(session_id, thinking_msg)
+                
+                try:
+                    # Parse and update character based on action
+                    character_modified = parse_character_updates(action, player.character)
+                    
+                    # Process action
+                    session.game_log.append(f"{player.name}: {action}")
+                    dm_response = ""
+                    update_type = "narrative_update"
+                    if action.lower().startswith("attack"):
+                        # Combat action
+                        target = action.split()[1] if len(action.split()) > 1 else "goblin"
+                        if target in session.combat_state['enemies']:
+                            damage = random.randint(5, 15)
+                            session.combat_state['enemies'][target]['health'] -= damage
+                            dm_response = f"You attack the {target} for {damage} damage."
+                            if session.combat_state['enemies'][target]['health'] <= 0:
+                                dm_response += f" The {target} is defeated!"
+                                session.in_combat = False
+                            update_type = "combat_update"
+                        else:
+                            dm_response = f"No enemy named {target} found."
+                            update_type = "combat_update"
+                    else:
+                        # Narrative action - THIS IS WHERE DM THINKS
+                        session.dm.game_log = session.game_log
+                        dm_response = session.dm.dm_turn_hook()
+                    session.game_log.append(f"DM: {dm_response}")
+                    
+                    # Always save character after action
+                    for p in session.players:
+                        if p.player_id == player_id:
+                            p.character.health = session.combat_state['players'][p.name]['health']
+                            self.manager.db.save_character(p.player_id, p.character)
+                            print(f"[DB] Saved character for {p.name}: Class={p.character.character_class}, Health={p.character.health}")
+                            break
+                    
+                    # Broadcast update to ALL players
+                    update_msg = {
+                        "type": update_type,
+                        "action": action,
+                        "player_name": player.name,
+                        "dm_response": dm_response,
+                        "combat_state": session.combat_state if update_type == "combat_update" else None
+                    }
+                    broadcast_to_session(session_id, update_msg)
+                    
+                finally:
+                    # Release lock
+                    session.dm_processing = False
+            
             self._send_json(200, {"status": "action processed"})
 
         self._send_json(404, {"error": "Endpoint not found"})
